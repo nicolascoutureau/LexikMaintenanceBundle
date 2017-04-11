@@ -9,6 +9,8 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Component\HttpFoundation\IpUtils;
+use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
+use Symfony\Bundle\FrameworkBundle\Routing\Router;
 
 /**
  * Listener to decide if user can access to the site
@@ -119,7 +121,8 @@ class MaintenanceListener
         $attributes = array(),
         $http_code = null,
         $http_status = null,
-        $debug = false
+        $debug = false,
+        Router $router
     ) {
         $this->driverFactory = $driverFactory;
         $this->path = $path;
@@ -194,8 +197,17 @@ class MaintenanceListener
         $driver = $this->driverFactory->getDriver();
 
         if ($driver->decide() && HttpKernelInterface::MASTER_REQUEST === $event->getRequestType()) {
-            $this->handleResponse = true;
-            throw new ServiceUnavailableException();
+            $this->handleResponse = false;
+            /*throw new ServiceUnavailableException();*/
+
+            $route = 'front_home';
+
+            if ($route === $event->getRequest()->get('_route')) {
+                return;
+            }
+
+            $response = new RedirectResponse($this->router->generate($route));
+            $event->setResponse($response);
         }
 
         return;
