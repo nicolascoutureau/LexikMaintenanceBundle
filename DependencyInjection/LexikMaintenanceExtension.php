@@ -46,6 +46,9 @@ class LexikMaintenanceExtension extends Extension
         $container->setParameter('lexik_maintenance.response.http_code', $config['response']['code']);
         $container->setParameter('lexik_maintenance.response.http_status', $config['response']['status']);
 
+        //Route de redirection
+        $container->setParameter('lexik_maintenance.response.redirect_route', $config['response']['redirect_route']);
+
         if (isset($config['driver']['options']['dsn'])) {
             $this->registerDsnconfiguration($config['driver']['options']);
         }

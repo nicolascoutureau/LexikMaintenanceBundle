@@ -5,6 +5,7 @@ namespace Lexik\Bundle\MaintenanceBundle\Listener;
 use Lexik\Bundle\MaintenanceBundle\Drivers\DriverFactory;
 use Lexik\Bundle\MaintenanceBundle\Exception\ServiceUnavailableException;
 
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
@@ -87,6 +88,14 @@ class MaintenanceListener
      * @var bool
      */
     protected $debug;
+    /**
+     * @var Router
+     */
+    private $router;
+    /**
+     * @var null
+     */
+    private $redirect_route;
 
     /**
      * Constructor Listener
@@ -108,6 +117,8 @@ class MaintenanceListener
      * @param Int $http_code http status code for response
      * @param String $http_status http status message for response
      * @param bool $debug
+     * @param Router $router
+     * @param null $redirect_route
      */
     public function __construct(
         DriverFactory $driverFactory,
@@ -121,7 +132,8 @@ class MaintenanceListener
         $http_code = null,
         $http_status = null,
         $debug = false,
-        Router $router
+        Router $router,
+        $redirect_route = null
     ) {
         $this->driverFactory = $driverFactory;
         $this->path = $path;
@@ -134,6 +146,8 @@ class MaintenanceListener
         $this->http_code = $http_code;
         $this->http_status = $http_status;
         $this->debug = $debug;
+        $this->router = $router;
+        $this->redirect_route = $redirect_route;
     }
 
     /**
@@ -196,17 +210,19 @@ class MaintenanceListener
         $driver = $this->driverFactory->getDriver();
 
         if ($driver->decide() && HttpKernelInterface::MASTER_REQUEST === $event->getRequestType()) {
-            $this->handleResponse = false;
-            /*throw new ServiceUnavailableException();*/
 
-            $route = 'front_home';
+            if(!$this->redirect_route){
+                $this->handleResponse = false;
+                throw new ServiceUnavailableException();
+            }else{
 
-            if ($route === $event->getRequest()->get('_route')) {
-                return;
+                if ($this->redirect_route === $event->getRequest()->get('_route')) {
+                    return;
+                }
+
+                $response = new RedirectResponse($this->router->generate($this->redirect_route));
+                $event->setResponse($response);
             }
-
-            $response = new RedirectResponse($this->router->generate($route));
-            $event->setResponse($response);
         }
 
         return;
