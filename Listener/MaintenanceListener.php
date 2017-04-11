@@ -9,7 +9,6 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Component\HttpFoundation\IpUtils;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 
 /**
